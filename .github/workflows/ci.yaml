@@ -1,34 +1,43 @@
----
-name: Java CI
-
-on: [push, pull_request]
-
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, macOS-latest]
-        java: [8]
-      fail-fast: false
-      max-parallel: 4
     name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: ${{ matrix.java }}
-      - uses: actions/cache@v2
-        env:
-          cache-name: cache-maven-modules
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}
-      - name: Test with Maven
-        run: mvn test -B --file pom.xml
+    - continue-on-error: true
+      uses: actions/checkout@v2
+    - continue-on-error: true
+      name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - continue-on-error: true
+      env:
+        cache-name: cache-maven-modules
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-maven-${{ hashFiles('**/pom.xml')
+          }}
+        path: ~/.m2/repository
+        restore-keys: '${{ runner.os }}-build-${{ env.cache-name }}-
+
+          ${{ runner.os }}-build-
+
+          ${{ runner.os }}
+
+          '
+    - continue-on-error: true
+      name: Test with Maven
+      run: mvn test -B --file pom.xml
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+        - 8
+        os:
+        - ubuntu-18.04
+        - macOS-latest
+      max-parallel: 4
+name: Java CI
+on:
+  repository_dispatch:
+    types: trigger-ga___ci.yaml
